@@ -1,3 +1,3 @@
 # Assignment 2: MeshEdit
 
-http://462cmu.github.io/asst2_meshedit/
+https://cs184.org/article/9
