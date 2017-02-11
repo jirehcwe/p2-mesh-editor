@@ -44,6 +44,8 @@ namespace CGL {
     float t; // Value between 0 and 1 to evaluate the Bezier curve at
     int numControlPoints;
 
+  private:
+    // Private variables for rendering the Bezier curves; do not use or modify these!
     size_t width, height;
     int selected = -1;
     int eval_level = 0;
