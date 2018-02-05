@@ -171,7 +171,7 @@ add_subdirectory(src)
 if(BUILD_DOCS)
   find_package(DOXYGEN)
   if(DOXYGEN_FOUND AND BUILD_DOCS)
-    add_subdirectory(docs)
+    add_subdirectory(documentation)
   endif()
 endif()
 
