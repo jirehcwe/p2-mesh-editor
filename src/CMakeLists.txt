@@ -48,6 +48,11 @@ include_directories(
   ${FREETYPE_INCLUDE_DIRS}
 )
 
+if (WIN32)
+    include_directories(dirent)
+endif(WIN32)
+
+
 #-------------------------------------------------------------------------------
 # Set link directories
 #-------------------------------------------------------------------------------
@@ -57,6 +62,10 @@ link_directories(
   ${CGL_LIBRARY_DIRS}
   ${FREETYPE_LIBRARY_DIRS}
 )
+
+if (WIN32)
+    list(APPEND APPLICATION_SOURCE dirent/dirent.c)
+endif(WIN32)
 
 #-------------------------------------------------------------------------------
 # Add executable
@@ -72,6 +81,7 @@ target_link_libraries( meshedit
     glfw ${GLFW_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${FREETYPE_LIBRARIES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/dirent/glut32.lib
 )
 
 #-------------------------------------------------------------------------------

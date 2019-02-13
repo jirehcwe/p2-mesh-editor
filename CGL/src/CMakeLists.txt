@@ -13,7 +13,7 @@ set(CGL_SOURCE
     complex.cpp
     color.cpp
     osdtext.cpp
-    osdfont.c
+    osdfont.cpp
     viewer.cpp
     base64.cpp
     tinyxml2.cpp

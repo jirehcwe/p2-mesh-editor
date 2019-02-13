@@ -7,6 +7,7 @@
 
 #include "base64.h"
 #include "console.h"
+#include "osdfont.cpp"
 
 using namespace std;
 
@@ -36,7 +37,7 @@ OSDText::~OSDText() {
   delete face;
 
   lines.clear();
-  
+
   glDeleteProgram(program);
 }
 
@@ -51,10 +52,11 @@ int OSDText::init(bool use_hdpi) {
   }
 
   // decode font and keep in memory
-  string encoded = osdfont_base64;
+  string encoded = osdfont_base64_1 + osdfont_base64_2 + osdfont_base64_3 
+                    + osdfont_base64_4 + osdfont_base64_5 + osdfont_base64_6;
   string decoded = base64_decode(encoded);
-  size_t size = decoded.size(); 
-  font = new char[size]; 
+  size_t size = decoded.size();
+  font = new char[size];
   memcpy(font, decoded.c_str(), size);
 
   // initialize font face
@@ -82,7 +84,7 @@ int OSDText::init(bool use_hdpi) {
 }
 
 void OSDText::render() {
-  
+
   glUseProgram(program);
 
   vector<OSDLine>::iterator it = lines.begin();
@@ -90,8 +92,12 @@ void OSDText::render() {
     draw_line(*it);
     ++it;
   }
-  
+
   glUseProgram(0);
+}
+
+void OSDText::clear() {
+	lines.clear();
 }
 
 void OSDText::resize(size_t w, size_t h) {
@@ -126,7 +132,7 @@ int OSDText::add_line(float x, float y, string text,
 void OSDText::del_line(int line_id) {
   vector<OSDLine>::iterator it = lines.begin();
   while(it != lines.end()) {
-    if(it->id == line_id) { 
+    if(it->id == line_id) {
       lines.erase(it);
       break;
     }
@@ -137,30 +143,30 @@ void OSDText::del_line(int line_id) {
 void OSDText::set_anchor(int line_id, float x, float y) {
   vector<OSDLine>::iterator it = lines.begin();
   while(it != lines.end()) {
-    if(it->id == line_id) { 
+    if(it->id == line_id) {
       it->x = x;
       it->y = y;
       break;
     }
     ++it;
-  }  
+  }
 }
 
 void OSDText::set_text(int line_id, string text) {
   vector<OSDLine>::iterator it = lines.begin();
   while(it != lines.end()) {
-    if(it->id == line_id) { 
+    if(it->id == line_id) {
       it->text = text;
       break;
     }
     ++it;
-  }  
+  }
 }
 
 void OSDText::set_size(int line_id, size_t size) {
   vector<OSDLine>::iterator it = lines.begin();
   while(it != lines.end()) {
-    if(it->id == line_id) { 
+    if(it->id == line_id) {
       it->size = size;
       break;
     }
@@ -185,7 +191,12 @@ void OSDText::draw_line(OSDLine line) {
   FT_Set_Pixel_Sizes(*face, 0, line.size);
 
   // set font color
-  glUniform4fv(uniform_color, 1, (GLfloat*) &line.color);
+  float color_rgba[4];
+  color_rgba[0] = line.color.r;
+  color_rgba[1] = line.color.g;
+  color_rgba[2] = line.color.b;
+  color_rgba[3] = 1.0f;
+  glUniform4fv(uniform_color, 1, (GLfloat*) color_rgba);
 
   // get glyph
   const char *p;
@@ -198,7 +209,7 @@ void OSDText::draw_line(OSDLine line) {
   glBindTexture(GL_TEXTURE_2D, tex);
   glUniform1i(uniform_tex, 0);
 
-  // require 1 byte alignment when uploading texture data 
+  // require 1 byte alignment when uploading texture data
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   // clamping to edges is important to prevent artifacts when scaling
@@ -222,8 +233,8 @@ void OSDText::draw_line(OSDLine line) {
     if (FT_Load_Char(*face, *p, FT_LOAD_RENDER)) continue;
 
     // Upload the glyph bitmap as an alpha texture
-    glTexImage2D(GL_TEXTURE_2D, 
-                 0, GL_ALPHA, g->bitmap.width, g->bitmap.rows, 
+    glTexImage2D(GL_TEXTURE_2D,
+                 0, GL_ALPHA, g->bitmap.width, g->bitmap.rows,
                  0, GL_ALPHA, GL_UNSIGNED_BYTE, g->bitmap.buffer);
 
     // calculate the vertex and texture coordinates
@@ -239,7 +250,7 @@ void OSDText::draw_line(OSDLine line) {
       {x2 + w, -y2 - h, 1, 1},
     };
 
-    // draw the character to screen 
+    // draw the character to screen
     glBufferData(GL_ARRAY_BUFFER, sizeof box, box, GL_DYNAMIC_DRAW);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 

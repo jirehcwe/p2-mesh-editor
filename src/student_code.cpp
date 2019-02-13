@@ -10,6 +10,7 @@ namespace CGL
     // TODO Part 1.
     // Perform one step of the Bezier curve's evaluation at t using de Casteljau's algorithm for subdivision.
     // Store all of the intermediate control points into the 2D vector evaluatedLevels.
+    return;
   }
 
 
@@ -27,9 +28,8 @@ namespace CGL
     // TODO Part 2.
     // Optional helper function that you might find useful to implement as an abstraction when implementing BezierPatch::evaluate.
     // Given an array of 4 points that lie on a single curve, evaluates the Bezier curve at parameter t using 1D de Casteljau subdivision.
-
     return Vector3D();
-  }
+ }
 
 
 
@@ -39,7 +39,6 @@ namespace CGL
     // TODO Returns an approximate unit normal at this vertex, computed by
     // TODO taking the area-weighted average of the normals of neighboring
     // TODO triangles, then normalizing.
-
     return Vector3D();
   }
 
@@ -47,7 +46,6 @@ namespace CGL
   {
     // TODO Part 4.
     // TODO This method should flip the given edge and return an iterator to the flipped edge.
-
     return e0;
   }
 
@@ -56,8 +54,7 @@ namespace CGL
     // TODO Part 5.
     // TODO This method should split the given edge and return an iterator to the newly inserted vertex.
     // TODO The halfedge of this vertex should point along the edge that was split, rather than the new edges.
-
-    return e0->halfedge()->vertex();
+    return newVertex();
   }
 
 
@@ -93,6 +90,7 @@ namespace CGL
 
 
     // TODO Finally, copy the new vertex positions into final Vertex::position.
-  }
 
+    return;
+  }
 }

@@ -5,7 +5,7 @@ project(ColladaViewer)
 # Build options
 #-------------------------------------------------------------------------------
 option(BUILD_LIBCGL "Build with libCGL"         ON)
-option(BUILD_DEBUG     "Build with debug settings"    OFF)
+option(BUILD_DEBUG     "Build with debug settings"    ON)
 option(BUILD_DOCS      "Build documentation"          OFF)
 
 #-------------------------------------------------------------------------------
@@ -117,7 +117,7 @@ if(WIN32)
 
   if(MSVC)
 
-    set(MSVC_CXX_FLAGS "-std=gnu++11")
+    set(MSVC_CXX_FLAGS "-std=c++11")
 
     if(BUILD_DEBUG)
         set(CMAKE_BUILD_TYPE Debug)
@@ -130,7 +130,7 @@ if(WIN32)
 
   if(MINGW)
 
-    set(MSVC_CXX_FLAGS "-std=gnu++11")
+    set(MSVC_CXX_FLAGS "-std=c++11")
 
     if(BUILD_DEBUG)
         set(CMAKE_BUILD_TYPE Debug)
@@ -149,7 +149,9 @@ endif(WIN32)
 
 # Required packages
 find_package(OpenGL REQUIRED)
-find_package(Freetype REQUIRED)
+if(NOT WIN32)
+  find_package(Freetype REQUIRED)
+endif()
 
 # CGL
 if(BUILD_LIBCGL)

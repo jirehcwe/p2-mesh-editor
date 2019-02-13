@@ -125,7 +125,7 @@ int _glfwCreateContext(_GLFWwindow* window,
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
     if (ctxconfig->major >= 4)
     {
-        ADD_ATTR2(NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion4_1Core);
+        ADD_ATTR2(NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core);
     }
     else
 #endif /*MAC_OS_X_VERSION_MAX_ALLOWED*/
