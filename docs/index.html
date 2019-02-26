@@ -25,42 +25,63 @@
 
 <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2019</h1>
 <h1 align="middle">Project 2: Mesh Editor</h1>
-<h2 align="middle">YOUR NAME</h2>
+<h2 align="middle">Jireh Wei En Chew</h2>
 
 <br><br>
 
 <div>
 
 <h2 align="middle">Overview</h2>
-<p>Give a high-level overview of what you implemented in this project. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the project.</p>
+<p>Moving on from rendering, we now delve in the world of meshes and 3D object representation. We first touch on 
+  Bezier curves and surfaces, which are very simple ways to create complex shapes efficiently. With a few control 
+  points, we can describe a curve parametrically. <br>Moving to Part 2, we then extend our understanding of Bezier curves and 
+  create a Bezier patch, by introducing another dimension and more control points. 
+
+<br><br>
+In the next section, we take a look at another commonly used representation of objects in 3D space: triangle meshes.
+We learn how to create a smoother appearance by area averaging out normals for vertices.
+<br>
+We then learn how to manipulate our half-edge mesh data structure with edge flipping and edge splitting.
+<br><br>
+Finally, we combine these 2 techniques to perform Loop subdivision, which is a iterative and simple way to smooth out a given, 
+rough mesh. The technique is quite cheap and since we can stop upsampling at any time, this technique is very useful in making 
+realistic models without the pain of actually modelling the geometry ourselves. However, to create edges and sharp corners, one 
+must also implement more subdivision rules and special edges to do so.
+
+<br><br>
+Overall, I enjoyed the project and felt it was easier than Project 1. Perhaps we can get more shapes that subdivide into interesting blobs?
+
+</p>
 
 <h2 align="middle">Section I: Bezier Curves and Surfaces</h2>
 
-<h3 align="middle">Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
 
-<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
+<h3 align="middle">Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
+<p>In <i>evaluateStep</i>, I calculate 2 values. 
+<ol>
+  <li>The order of the next Bezier curve as <i>nextIndex</i>.</li>
+  <li>The number of points needed as <i>numberOfPoints</i>.</li>
+</ol></p>
+
+Using these two values, I can calculate the point of the curve at any value of the parameter <i>t</i>.
+I use the linear interpolation equation and a for loop to iterate over the current set of anchor points 
+to create the next set of anchor points. <br><br>These points are stored in a temporary 
+<i>vector&lt;Vector2D&gt;</i> called <i> nextLevelVector</i> and finally use the <i>push_back</i> function
+ to insert this new layer of control points into <i>evaluatedLevels</i>.
 
 <div align="middle">
   <table style="width=100%">
     <tr>
       <td>
-        <img src="images/image1.png" align="middle" width="400px"/>
-        <figcaption align="middle">Caption goes here.</figcaption>
-      </td>
-      <td>
-        <img src="images/image2.png" align="middle" width="400px"/>
-        <figcaption align="middle">Caption goes here.</figcaption>
+        <img src="Images/Part1.gif" align="middle" width="600px"/>
+        <figcaption align="middle">Original curve with 6 points.</figcaption>
       </td>
     </tr>
     <br>
     <tr>
       <td>
-        <img src="images/image3.png" align="middle" width="400px"/>
-        <figcaption align="middle">Caption goes here.</figcaption>
-      </td>
-      <td>
-        <img src="images/image4.png" align="middle" width="400px"/>
-        <figcaption align="middle">Caption goes here.</figcaption>
+        <img src="Images/Part1-1.gif" align="middle" width="600px"/>
+        <figcaption align="middle">New, sexier curve with different points and added curviness.</figcaption>
       </td>
     </tr>
   </table>
@@ -69,25 +90,224 @@
 
 <h3 align="middle">Part 2: Bezier surfaces with separable 1D de Casteljau subdivision</h3>
 
+<p>In Part 2, de Casteljau's algorithm is used as the first method "Separable 1D de Casteljau". <br> 
+Given the 4x4 grid of control points of the Bezier patch and the u,v coordinates to calculate, we perform the 
+following steps to calculate the patch over u,v:
+<ol>
+  <li>For each row of points, calculate the Bezier curve for those 4 points at u.</li>
+  <li>For these 4 points from each row, calculate the Bezier curve for the parameter v.</li>
+</ol>
 
+<br>
+This gives us, from 16 control points, 1 point per evaluation. As we evaluate across the u,v space, we get a Bezier patch. 
+With multiple patches, we can render an object.</p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="Images/Part2 Teapot.png" align="middle" width="600px"/>
+        <figcaption align="middle"><i>Here is my handle, and here is my spout.</i></figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
 
 <h2 align="middle">Section II: Sampling</h2>
 
 <h3 align="middle">Part 3: Average normals for half-edge meshes</h3>
 
+<p>From a high-level perspective, I walked around the halfedges that were connected to the vertex, and 
+  calculated the area-weighted normals of each of the faces belonging to the halfedges using the cross product.
+   I normalized this summed normal and returned it as the new normal for the current vertex.
+  <br> <br>
+  More specifically:
+<ol>
+  <li>Cached the central point as a <i>Vector3D</i> to be used in calculation of the edge vectors.</li>
+  <li>Cached a reference to the starting twin halfedge (the halfedge pointing towards the central vertex.)</li>
+  <li>In a while loop, calculate 2 vectors of the edges of the triangles, by using 3 points: <ul><li>The cached common point in step 1.</li><li>The further point belonging to the current halfedge pointing towards the central point.</li><li>The further point belonging to the twin of the next halfedge.</li></ul></li>
+  <li>Take half of the cross product of these 2 vectors and add it to the summing vector for the normals.</li>
+  <li>Since the cross product's magnitude is twice the area of the triangle that these 2 vectors define, the addition I do in step 4 is already area-weighting each normal.</li>
+  <li>Returning the normalized value of the sum gives the area-weighted normal for the current vertex.</li>
+</ol></p>
+
+<div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="Images/Part3 Q toggle.gif" align="middle" width="600px"/>
+          <figcaption align="middle"><i>Be...our...guest, be our guest, put our renderer to the test!</i></figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
 
 <h3 align="middle">Part 4: Half-edge flip</h3>
 
+<p>The <i>flipEdge</i> function was implemented in these steps:
+<ol>
+  <li>I collected every halfedge (10), vertex (4), edge (5) and face (2) reference, with 21 in total including the provided edge.</li>
+  <li>I reassigned every element in each halfedge.<ul>
+    <li>next(), twin(), vertex(), edge(), face()</li>
+  </ul></li>
+  <li>I reassigned every vertex's halfedge.</li>
+  <li>I reassigned every edge's halfedge.</li>
+  <li>I reassigned every face's halfedge.</li>
+
+  By following the method described in the implementation guide provided, I did not encounter any major bugs. 
+</ol></p>
+
+<div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="Images/Part4 Flipping Edges.gif" align="middle" width="600px"/>
+          <figcaption align="middle"><i>Flipping edges!</i></figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
 
 <h3 align="middle">Part 5: Half-edge split</h3>
 
+<p>The <i>splitEdge</i> function was implemented in these steps:
+  <ol>
+    <li>I collected every halfedge (10), vertex (4), edge (5) and face (2) reference, with 21 in total including the provided edge.</li>
+    <li>I also created new halfedges (6), vertices (1), edges (3) and faces (2) with 12 in total.</li>
+    <li>I reassigned every element in each halfedge.<ul>
+      <li>next(), twin(), vertex(), edge(), face()</li>
+    </ul></li>
+    <li>I reassigned every vertex's halfedge.</li>
+    <li>I reassigned every edge's halfedge.</li>
+    <li>I reassigned every face's halfedge.</li>
+  
+    <br>
+    I also drew my own reassignment diagram for reference. No major bugs were found, except when I assigned both f0 and f1 to the same face. That took a while to find.
+  </ol></p>
+
+  <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="Images/Part5 Reference.jpg" align="middle" width="400px"/>
+            <figcaption align="middle"><i>Reference diagram for splitting edges.</i></figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+  <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="Images/Part5 Splitting.gif" align="middle" width="600px"/>
+            <figcaption align="middle">Splitting tris of a teapot.<i>"It ain't much, but it's honest work."</i></figcaption>
+          </td>
+        </tr>
+        <br>
+        <tr>
+          <td>
+            <img src="Images/Part5 Flip and Split.gif" align="middle" width="600px"/>
+            <figcaption align="middle">Flipping and splitting. Kind of like my ex and I.</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
 
 <h3 align="middle">Part 6: Loop subdivision for mesh upsampling</h3>
+
+<p>I carried out Loop subdivision as such:
+  <ol>
+    <li>Iterating over all vertices, computed all the new positions for the old vertices using the formula given.</li>
+    <li>Iterating over all edges, computed all new positions for vertices formed from split edges.</li>
+    <li>At the same time, cache all these edges into a vector for the next step.</li>
+    <li>Split all edges in the cached vector.
+      <ul>
+        <li>Assigned isNew = false for 2 edges that made up the original edge.</li>
+        <li>Assigned isNew = true for 2 new edges created during spitting</li>
+        <li>Transfer the newPosition from the old edge to the newPosition of the new vertex created from splitting.</li>
+      </ul>
+      <li>Flip edges conneced to 1 old and 1 new point.<ul><li>Used a XOR operator for this.</li></ul></li>
+      <li>Finally, copy all newPositions and replace the positions of all vertices with newPositions.</li>
+    </li>
+  </ol>
+</p>
+
+<p></p>
+
+<div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="Images/Part6 NoSplit.gif" align="middle" width="400px"/>
+          <figcaption align="middle">No splitting of any vertices.</figcaption>
+        </td>
+        <td>
+            <img src="Images/Part6 2Split.gif" align="middle" width="400px"/>
+            <figcaption align="middle">Splitting the upper and lower surfaces of the protrusion.</figcaption>
+          </td>
+      </tr>
+      <br>
+      <tr>
+        <td>
+          <img src="Images/Part6 NoSplit Freeze.png" align="middle" width="400px"/>
+          <figcaption align="middle">Freeze frame for comparison.</figcaption>
+        </td>
+        <td>
+            <img src="Images/Part6 2Split Freeze.png" align="middle" width="400px"/>
+            <figcaption align="middle">Just splitting the sides of the torus creates less flexibility in points.</figcaption>
+          </td>
+      </tr>
+    </table>
+  </div>
+<br>
+<h3><p><i>"Can you pre-process the cube with flip and split so it subdivides symmetrically? Document these effects and explain why they occur, and how your pre-processing helps alleviate the effects."</i></p></h3>
+<p>In order to make the resulting upsampled cube symmetric, I hypothesised that the degree of the vertices mattered. I flipped the edges of the cube such as at
+   opposite ends, the vertices of the cube both have degree of 6. This also meant that every other vertex degree would be 4.</p>
+
+<div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="Images/Part6 StratFlip.gif" align="middle" width="600px"/>
+          <figcaption align="middle"><i>Setting opposite facing vertices to degree 6.<br> As a consequence, all other vertex degrees have to be 4.</i></figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+ <p>Upon upsampling, this created a hexagonal-esque pillow shape. My belief is that the original degrees are always conserved, but the points are moved slightly inward.
+   As such, like for the icosahedron, when upsampling, we see that there are always 12 vertices with a degree of 5 (from the original shape) that are preserved. So, in order to
+   get symmetric shape for the cube, we need the symmetric vertex degrees to be the same as well.
+ </p>
+
+ <div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="Images/Part6 Hexagon Pillow.gif" align="middle" width="600px"/>
+          <figcaption align="middle"><i>Symmetric shape yielded by symmetric vertex degrees.</i></figcaption>
+        </td>
+      </tr>
+      <br>
+      <tr>
+          <td>
+            <img src="Images/Part6 PreservedDegree.png" align="middle" width="600px"/>
+            <figcaption align="middle"><i>Zooming into one of the points on the shape, we see that the<br> degree 4 vertex is still preserved, circled in red.</i></figcaption>
+          </td>
+        </tr>
+    </table>
+  </div>
+
+
+
 
 <h2 align="middle">Section III: Mesh Competition</h2>
 <p>If you are not participating in the optional mesh competition, don't worry about this section!</p>
 
 <h3 align="middle">Part 7: Design your own mesh!</h3>
+
+
 
 </body>
 </html>
